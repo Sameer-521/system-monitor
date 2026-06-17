@@ -1,12 +1,13 @@
 import asyncio
 from contextlib import asynccontextmanager
 from typing import Annotated
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 from fastapi.sse import EventSourceResponse
 
 from app.schema import MetricsParams, Register
 from app.pubsub import Subscription, LatestSnapshot, broadcast, poller
 from app.ticket import TicketStore
+from app.system_info import fetch_processes, fetch_process_by_pid
 
 TICKET_LIFETIME = 300
 DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
@@ -89,3 +90,23 @@ async def issue_ticket(user_id: str):
 
     ticket = tickets_store.issue(user_id)
     return {"ticket": ticket}
+
+
+@app.get("/system/snapshot")
+async def get_sys_snapshot():
+    data = await latest_snapshot.get_latest()
+    return {"response": data}
+
+
+@app.get("/processes")
+async def get_all_processes():
+    data = await asyncio.to_thread(fetch_processes)
+    return {"response": data}
+
+
+@app.get("/processes/{pid}")
+async def get_process_by_pid(pid: Annotated[int, Path(ge=1)]):
+    result = await asyncio.to_thread(fetch_process_by_pid, pid)
+    if isinstance(result, Exception):
+        raise result
+    return {"response": result}
