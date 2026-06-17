@@ -1,19 +1,19 @@
 import asyncio
 import time
-
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Annotated
 from uuid import uuid4
-
-from fastapi import FastAPI, HTTPException, Query, status, Depends
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app.data import SYSTEM_DATA
-from app.schema import Register, Snapshot
+from app.schema import MetricsParams, Register, Snapshot
 
 TICKET_LIFETIME = 300
+DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
+clients = set()
 
 
 async def verify_ticket(ticket: Annotated[str, Query(max_length=50)]):
@@ -75,6 +75,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(broadcast_to_all()),
     ]
     print("Tasks created succesfully...")
+    clients.add("Sameer")
 
     yield
 
@@ -93,32 +94,36 @@ tickets_store = TicketStore()
 
 
 class Subscription:
-    def __init__(self, owner_id: str):
+    def __init__(self, owner_id: str, _filters: list[str]):
         self.id = str(uuid4())
         self.owner_id = owner_id
         self.queue = asyncio.Queue(maxsize=1)
+        self._filters = _filters
 
     async def consumer(self) -> AsyncIterable[ServerSentEvent]:
         while True:
             payload = await self.queue.get()
-            yield ServerSentEvent(data=Snapshot(info=payload))
+            filtered = {
+                key: payload[key]
+                for key in self._filters
+                if key in payload.keys() or key in DEFAULT_FILTERS
+            }
+            yield ServerSentEvent(data=Snapshot(info=filtered))
 
 
 client_subs: dict[str, Subscription] = {}
-clients = set()
 sub_lock = asyncio.Lock()
 
 
 async def poller():
     while True:
-        for item in SYSTEM_DATA:
-            await sys_info.put(item)
-            await asyncio.sleep(2)
+        await sys_info.put(SYSTEM_DATA)
+        await asyncio.sleep(2)
 
 
 @app.post("/register", status_code=201)
 async def register(user: Register):
-    username = user.model_dump().get("username")
+    username: str = user.model_dump().get("username", "")
     if username in clients:
         raise HTTPException(
             status.HTTP_409_CONFLICT, detail={"error": "user already exists"}
@@ -128,14 +133,19 @@ async def register(user: Register):
 
 
 @app.get("/stream/all/{id}", response_class=EventSourceResponse)
-async def stream_all(id: str, valid_ticket=Depends(verify_ticket)):
+async def stream_all(
+    id: str,
+    metrics_filters: Annotated[MetricsParams, Query()],
+    valid_ticket=Depends(verify_ticket),
+):
     # drop existing sub if any
     async with sub_lock:
         old_sub = client_subs.get(id, None)
         if old_sub is not None:
             client_subs.pop(old_sub.id, None)
 
-    sub = Subscription(id)
+    _filters = [str(key) for key, val in metrics_filters.model_dump().items() if val]
+    sub = Subscription(id, _filters)
     client_subs[id] = sub
     print(client_subs)
 
