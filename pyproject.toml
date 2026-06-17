@@ -8,5 +8,3 @@ dependencies = [
     "fastapi[standard]>=0.137.1",
 ]
 
-[tool.pyright]
-include = ["app"]
