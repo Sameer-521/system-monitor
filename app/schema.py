@@ -7,3 +7,7 @@ class Register(BaseModel):
 
 class Snapshot(BaseModel):
     info: str
+
+
+class TicketResponse(BaseModel):
+    ticket: str
