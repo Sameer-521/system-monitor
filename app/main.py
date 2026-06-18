@@ -1,21 +1,24 @@
 import asyncio
 from contextlib import asynccontextmanager
 from typing import Annotated
+
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 from fastapi.sse import EventSourceResponse
 
+from app.pubsub import LatestSnapshot, Subscription, broadcast, poller
 from app.schema import MetricsParams, Register
-from app.pubsub import Subscription, LatestSnapshot, broadcast, poller
+from app.system_info import fetch_process_by_pid, fetch_processes
 from app.ticket import TicketStore
-from app.system_info import fetch_processes, fetch_process_by_pid
+from app.settings import _settings
 
-TICKET_LIFETIME = 300
+# TODO: add logging and replace print statements
+
 DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
 clients = set()
 sub_lock = asyncio.Lock()
 
 latest_snapshot = LatestSnapshot()
-tickets_store = TicketStore(TICKET_LIFETIME)
+tickets_store = TicketStore(_settings.ticket_lifetime)
 client_subs: dict[str, Subscription] = {}
 
 
@@ -28,6 +31,7 @@ async def lifespan(app: FastAPI):
     print("Tasks created succesfully...")
     clients.add("Sameer")
     clients.add("John")
+    clients.add("Joe")
 
     yield
 
@@ -53,30 +57,30 @@ async def register(user: Register):
     print(f"Client: {username}")
 
 
-@app.get("/stream/all/{id}", response_class=EventSourceResponse)
+@app.get("/stream/system/{id}", response_class=EventSourceResponse)
 async def stream_all(
     id: str,
     metrics_filters: Annotated[MetricsParams, Query()],
-    valid_ticket=Depends(tickets_store.verify_ticket),
+    valid_ticket=Depends(tickets_store.verify_ticket_header),
 ):
     _filters = [str(key) for key, val in metrics_filters.model_dump().items() if val]
     # drop existing sub if any
     async with sub_lock:
         old_sub = client_subs.get(id, None)
         if old_sub is not None:
-            client_subs.pop(old_sub.id, None)
+            _ = client_subs.pop(id, None)
 
         sub = Subscription(id, _filters)
         client_subs[id] = sub
         # print(client_subs)
 
     try:
-        async for event in sub.consumer():
+        async for event in sub.consumer(id):
             yield event
     finally:
         async with sub_lock:
             print(f"client: {id} disconnected from stream")
-            client_subs.pop(id, None)
+            _ = client_subs.pop(id, None)
 
 
 @app.post("/stream/ticket/{user_id}")

@@ -1,13 +1,13 @@
 import asyncio
-from uuid import uuid4
-from typing import Any
 from collections.abc import AsyncIterable
+from typing import Any
+from uuid import uuid4
+
 from fastapi.sse import ServerSentEvent
 
-from app.settings import _settings
 from app.schema import Snapshot
+from app.settings import _settings
 from app.system_info import fetch_system_resources
-
 
 DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
 
@@ -16,18 +16,18 @@ class Subscription:
     def __init__(self, owner_id: str, _filters: list[str]):
         self.id = str(uuid4())
         self.owner_id = owner_id
-        self.queue = asyncio.Queue(maxsize=1)
+        self.queue = asyncio.Queue(maxsize=4)
         self._filters = _filters
 
-    async def consumer(self) -> AsyncIterable[ServerSentEvent]:
+    async def consumer(self, id: str) -> AsyncIterable[ServerSentEvent]:
+        print(f"In consumer: {id}")
         while True:
-            payload = await self.queue.get()
-            filtered = {
-                key: payload[key]
-                for key in self._filters
-                if key in payload.keys() or key in DEFAULT_FILTERS
-            }
-            yield ServerSentEvent(data=Snapshot(info=filtered))
+            payload: dict[str, Any] = await self.queue.get()
+            keys_to_send = set(self._filters) | set(DEFAULT_FILTERS)
+            filtered = {k: payload[k] for k in keys_to_send if k in payload}
+            s = Snapshot(info=filtered).model_dump_json()  # TODO: make it more obvious
+            print(f"In consumer loop: {id}, info: {s}")
+            yield ServerSentEvent(data=s)
 
 
 class LatestSnapshot:
@@ -66,4 +66,5 @@ async def broadcast(
                 try:
                     sub.queue.put_nowait(data)
                 except asyncio.QueueFull:
-                    pass  # drop snapshot for the client
+                    # drop snapshot for the client
+                    print(f"dropping snapshot for {sub.owner_id} (queue full)")

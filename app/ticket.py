@@ -2,7 +2,9 @@ from typing import Annotated
 import time
 from dataclasses import dataclass
 from uuid import uuid4
-from fastapi import HTTPException, Query, status
+from fastapi import HTTPException, Header, status
+
+from app.schema import TicketHeader
 
 
 @dataclass(frozen=True)
@@ -38,7 +40,8 @@ class TicketStore:
         # print("Invalid")
         return False
 
-    async def verify_ticket(self, ticket: Annotated[str, Query(max_length=50)]):
+    async def verify_ticket_header(self, ticket: Annotated[TicketHeader, Header()]):
+        ticket = ticket.model_dump().get("x_ticket", "")
         if not self.consume(ticket):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

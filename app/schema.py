@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -6,14 +8,19 @@ class Register(BaseModel):
 
 
 class Snapshot(BaseModel):
-    info: dict
+    info: dict[str, Any]
 
 
 class TicketResponse(BaseModel):
     ticket: str
 
 
+class TicketHeader(BaseModel):
+    x_ticket: str
+
+
 class MetricsParams(BaseModel):
+    model_config = {"extra": "forbid"}
     cpu: bool = Field(default=False)
     memory: bool = Field(default=False)
     disk: bool = Field(default=False)

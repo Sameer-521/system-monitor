@@ -1,6 +1,7 @@
-from fastapi import HTTPException, status
-import psutil
 from typing import Any
+
+import psutil
+from fastapi import HTTPException, status
 
 ACCESS_DENIED = HTTPException(
     status_code=status.HTTP_403_FORBIDDEN, detail={"error": "access denied"}
@@ -37,7 +38,7 @@ def fetch_processes():
     return sorted(processes, key=lambda proc: proc["cpu_percent"], reverse=True)
 
 
-def fetch_process_by_pid(pid: int) -> dict | Exception:
+def fetch_process_by_pid(pid: int) -> dict[str, Any] | Exception:
     p_info: dict[str, Any] = {"pid": pid}
 
     try:
@@ -69,8 +70,8 @@ def get_readable_size(bytes_value):
         bytes_value /= 1024.0
 
 
-def fetch_system_resources() -> dict:
-    resources: dict[str, dict] = {"cpu": {}, "memory": {}, "disk": {}}
+def fetch_system_resources() -> dict[str, dict[str, Any]]:
+    resources: dict[str, dict[str, Any]] = {"cpu": {}, "memory": {}, "disk": {}}
 
     cpu_percent = psutil.cpu_percent()
     cpu_freq = psutil.cpu_freq()
