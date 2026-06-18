@@ -4,8 +4,10 @@ from typing import Any
 from collections.abc import AsyncIterable
 from fastapi.sse import ServerSentEvent
 
+from app.settings import _settings
 from app.schema import Snapshot
-from app.data import SYSTEM_DATA
+from app.system_info import fetch_system_resources
+
 
 DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
 
@@ -48,16 +50,20 @@ class LatestSnapshot:
 
 async def poller(snapshot: LatestSnapshot) -> None:
     while True:
-        await asyncio.sleep(2)
-        await snapshot.set(SYSTEM_DATA)
+        await asyncio.sleep(_settings.poller_interval)
+        info = await asyncio.to_thread(fetch_system_resources)
+        await snapshot.set(info)
 
 
-async def broadcast(snapshot: LatestSnapshot, subs: dict[str, Subscription]) -> None:
+async def broadcast(
+    snapshot: LatestSnapshot, subs: dict[str, Subscription], sub_lock: asyncio.Lock
+) -> None:
     last_version = -1
     while True:
         data, last_version = await snapshot.get_latest(last_version)
-        for _, sub in subs.items():
-            try:
-                sub.queue.put_nowait(data)
-            except asyncio.QueueFull:
-                pass  # drop snapshot for the client
+        async with sub_lock:
+            for _, sub in subs.items():
+                try:
+                    sub.queue.put_nowait(data)
+                except asyncio.QueueFull:
+                    pass  # drop snapshot for the client

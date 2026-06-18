@@ -11,4 +11,5 @@ wheels/
 
 TODO.md
 dummy_client.py
-test*
+# test*
+*.jsonl

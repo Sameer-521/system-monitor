@@ -59,3 +59,55 @@ def fetch_process_by_pid(pid: int) -> dict | Exception:
         return ACCESS_DENIED
     except Exception as e:
         return e
+
+
+def get_readable_size(bytes_value):
+    """Convert bytes to a human-readable format (GB, MB, etc.)"""
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if bytes_value < 1024.0:
+            return f"{bytes_value:.2f} {unit}"
+        bytes_value /= 1024.0
+
+
+def fetch_system_resources() -> dict:
+    resources: dict[str, dict] = {"cpu": {}, "memory": {}, "disk": {}}
+
+    cpu_percent = psutil.cpu_percent()
+    cpu_freq = psutil.cpu_freq()
+    memory = psutil.virtual_memory()
+    swap_memory = psutil.swap_memory()
+    disk = psutil.disk_usage("/")
+
+    resources["cpu"].update(
+        [
+            ("cpu_percent", f"{round(cpu_percent, 1)}%"),
+            ("cpu_freq", f"{round(cpu_freq.current, 1)}"),
+        ]
+    )
+
+    resources["memory"].update(
+        [
+            ("total", get_readable_size(memory.total)),
+            ("used", get_readable_size(memory.used)),
+            ("available", get_readable_size(memory.available)),
+            ("percent", f"{round(memory.percent, 1)}%"),
+            (
+                "swap",
+                {
+                    "total": get_readable_size(swap_memory.total),
+                    "used": get_readable_size(swap_memory.used),
+                    "percent": f"{round(swap_memory.percent, 1)}%",
+                },
+            ),
+        ]
+    )
+
+    resources["disk"].update(
+        [
+            ("size", get_readable_size(disk.total)),
+            ("used", get_readable_size(disk.used)),
+            ("percent", f"{round(disk.percent, 1)}%"),
+        ]
+    )
+
+    return resources

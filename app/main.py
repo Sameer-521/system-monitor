@@ -12,7 +12,7 @@ from app.system_info import fetch_processes, fetch_process_by_pid
 TICKET_LIFETIME = 300
 DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
 clients = set()
-
+sub_lock = asyncio.Lock()
 
 latest_snapshot = LatestSnapshot()
 tickets_store = TicketStore(TICKET_LIFETIME)
@@ -23,7 +23,7 @@ client_subs: dict[str, Subscription] = {}
 async def lifespan(app: FastAPI):
     background_tasks = [
         asyncio.create_task(poller(latest_snapshot)),
-        asyncio.create_task(broadcast(latest_snapshot, client_subs)),
+        asyncio.create_task(broadcast(latest_snapshot, client_subs, sub_lock)),
     ]
     print("Tasks created succesfully...")
     clients.add("Sameer")
@@ -40,8 +40,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-sub_lock = asyncio.Lock()
 
 
 @app.post("/register", status_code=201)
@@ -61,22 +59,23 @@ async def stream_all(
     metrics_filters: Annotated[MetricsParams, Query()],
     valid_ticket=Depends(tickets_store.verify_ticket),
 ):
+    _filters = [str(key) for key, val in metrics_filters.model_dump().items() if val]
     # drop existing sub if any
     async with sub_lock:
         old_sub = client_subs.get(id, None)
         if old_sub is not None:
             client_subs.pop(old_sub.id, None)
 
-    _filters = [str(key) for key, val in metrics_filters.model_dump().items() if val]
-    sub = Subscription(id, _filters)
-    client_subs[id] = sub
-    print(client_subs)
+        sub = Subscription(id, _filters)
+        client_subs[id] = sub
+        # print(client_subs)
 
     try:
         async for event in sub.consumer():
             yield event
     finally:
         async with sub_lock:
+            print(f"client: {id} disconnected from stream")
             client_subs.pop(id, None)
 
 
