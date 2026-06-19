@@ -16,7 +16,7 @@ class Subscription:
     def __init__(self, owner_id: str, _filters: list[str]):
         self.id = str(uuid4())
         self.owner_id = owner_id
-        self.queue = asyncio.Queue(maxsize=4)
+        self.queue = asyncio.Queue(maxsize=1)
         self._filters = _filters
 
     async def consumer(self, id: str) -> AsyncIterable[ServerSentEvent]:
@@ -26,7 +26,7 @@ class Subscription:
             keys_to_send = set(self._filters) | set(DEFAULT_FILTERS)
             filtered = {k: payload[k] for k in keys_to_send if k in payload}
             s = Snapshot(info=filtered).model_dump_json()  # TODO: make it more obvious
-            print(f"In consumer loop: {id}, info: {s}")
+            # print(f"In consumer loop: {id}, info: {s}")
             yield ServerSentEvent(data=s)
 
 
@@ -66,5 +66,7 @@ async def broadcast(
                 try:
                     sub.queue.put_nowait(data)
                 except asyncio.QueueFull:
-                    # drop snapshot for the client
-                    print(f"dropping snapshot for {sub.owner_id} (queue full)")
+                    print(f"{sub.owner_id}: queue full. Dropping old entry.")
+                    # drain old entry and set latest
+                    _ = sub.queue.get_nowait()
+                    sub.queue.put_nowait(data)

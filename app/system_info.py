@@ -70,45 +70,74 @@ def get_readable_size(bytes_value):
         bytes_value /= 1024.0
 
 
-def fetch_system_resources() -> dict[str, dict[str, Any]]:
-    resources: dict[str, dict[str, Any]] = {"cpu": {}, "memory": {}, "disk": {}}
-
+def _fetch_cpu_info() -> dict[str, Any]:
     cpu_percent = psutil.cpu_percent()
-    cpu_freq = psutil.cpu_freq()
+    cpu_freq = [round(freq.current, 1) for freq in psutil.cpu_freq(percpu=True)]
+    num_cores = psutil.cpu_count() or 0
+
+    load_avg = psutil.getloadavg()
+    load_per_cpu = [(x / float(num_cores)) * 100 for x in load_avg]
+    min_times = ["1min", "5min", "15min"]
+
+    core_temps = psutil.sensors_temperatures().get("coretemp", [])
+    core_temp = core_temps[0].current if len(core_temps) > 0 else None
+
+    return {
+        "usage_percent": round(cpu_percent, 1),
+        "cores": num_cores,
+        "cpu_freq": cpu_freq,
+        "load_average": dict(zip(min_times, load_per_cpu)),
+        "temp_celcius": core_temp,
+    }
+
+
+def _fetch_mem_info() -> dict[str, Any]:
     memory = psutil.virtual_memory()
     swap_memory = psutil.swap_memory()
-    disk = psutil.disk_usage("/")
 
-    resources["cpu"].update(
-        [
-            ("cpu_percent", f"{round(cpu_percent, 1)}%"),
-            ("cpu_freq", f"{round(cpu_freq.current, 1)}"),
-        ]
-    )
+    return {
+        "total": get_readable_size(memory.total),
+        "used": get_readable_size(memory.total - memory.available),
+        "available": get_readable_size(memory.available),
+        "usage_percentage": round(memory.percent, 1),
+        "swap": {
+            "total": get_readable_size(swap_memory.total),
+            "used": get_readable_size(swap_memory.used),
+            "free": get_readable_size(swap_memory.free),
+        },
+    }
 
-    resources["memory"].update(
-        [
-            ("total", get_readable_size(memory.total)),
-            ("used", get_readable_size(memory.used)),
-            ("available", get_readable_size(memory.available)),
-            ("percent", f"{round(memory.percent, 1)}%"),
-            (
-                "swap",
-                {
-                    "total": get_readable_size(swap_memory.total),
-                    "used": get_readable_size(swap_memory.used),
-                    "percent": f"{round(swap_memory.percent, 1)}%",
-                },
-            ),
-        ]
-    )
 
-    resources["disk"].update(
-        [
-            ("size", get_readable_size(disk.total)),
-            ("used", get_readable_size(disk.used)),
-            ("percent", f"{round(disk.percent, 1)}%"),
-        ]
-    )
+def _fetch_disk_info() -> list[dict[str, Any]]:
+    partitions = psutil.disk_partitions()
+
+    p_info = []
+
+    for p in partitions:
+        p_usage = psutil.disk_usage(p.mountpoint)
+        p_info.append(
+            {
+                "mount": p.mountpoint,
+                "device": p.device,
+                "total": get_readable_size(p_usage.total),
+                "used": get_readable_size(p_usage.used),
+                "free": get_readable_size(p_usage.free),
+                "usage_percentage": p_usage.percent,
+            }
+        )
+
+    return p_info
+
+
+def fetch_system_resources() -> dict[str, dict[str, Any] | list[dict]]:
+    resources: dict[str, dict[str, Any] | list[dict]] = {
+        "cpu": {},
+        "memory": {},
+        "disk": {},
+    }
+
+    resources["cpu"] = _fetch_cpu_info()
+    resources["memory"] = _fetch_mem_info()
+    resources["disk"] = _fetch_disk_info()
 
     return resources
