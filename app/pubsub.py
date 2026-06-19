@@ -23,7 +23,7 @@ class Subscription:
         print(f"In consumer: {id}")
         while True:
             payload: dict[str, Any] = await self.queue.get()
-            keys_to_send = set(self._filters) | set(DEFAULT_FILTERS)
+            keys_to_send = DEFAULT_FILTERS + self._filters
             filtered = {k: payload[k] for k in keys_to_send if k in payload}
             s = Snapshot(info=filtered).model_dump_json()  # TODO: make it more obvious
             # print(f"In consumer loop: {id}, info: {s}")

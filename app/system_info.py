@@ -1,3 +1,5 @@
+import platform
+from datetime import datetime
 from typing import Any
 
 import psutil
@@ -35,6 +37,7 @@ def fetch_processes():
         except psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess:
             continue
 
+    # sort by cpu_percent in ascending order
     return sorted(processes, key=lambda proc: proc["cpu_percent"], reverse=True)
 
 
@@ -83,7 +86,7 @@ def _fetch_cpu_info() -> dict[str, Any]:
     core_temp = core_temps[0].current if len(core_temps) > 0 else None
 
     return {
-        "usage_percent": round(cpu_percent, 1),
+        "usage_percentage": round(cpu_percent, 1),
         "cores": num_cores,
         "cpu_freq": cpu_freq,
         "load_average": dict(zip(min_times, load_per_cpu)),
@@ -129,8 +132,14 @@ def _fetch_disk_info() -> list[dict[str, Any]]:
     return p_info
 
 
-def fetch_system_resources() -> dict[str, dict[str, Any] | list[dict]]:
-    resources: dict[str, dict[str, Any] | list[dict]] = {
+def fetch_system_resources() -> dict[str, str | dict[str, Any] | list[dict] | Any]:
+    dt_now = datetime.now()
+    dt_object = datetime.fromtimestamp(dt_now.timestamp())
+    uptime = datetime.fromtimestamp(psutil.boot_time()) - dt_now
+    resources: dict[str, Any] = {
+        "timestamp": dt_object.strftime("%Y-%m-%d %H:%M:%S"),
+        "hostname": platform.node(),
+        "uptime_seconds": uptime.seconds,
         "cpu": {},
         "memory": {},
         "disk": {},
