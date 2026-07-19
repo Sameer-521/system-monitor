@@ -6,8 +6,8 @@ class AlertRegistry:
     def __init__(self, evaluators: list[AlertEvaluator]) -> None:
         self.evaluators = evaluators
 
-    def evaluate(self, snapshot: dict, timestamp: float) -> list[Alert]:
+    def evaluate(self, snapshot: dict) -> list[Alert]:
         alerts: list[Alert] = []
         for evaluator in self.evaluators:
-            alerts.extend(evaluator.evaluate(snapshot, timestamp))
+            alerts.extend(evaluator.evaluate(snapshot))
         return alerts

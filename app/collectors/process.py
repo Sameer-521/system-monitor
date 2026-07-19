@@ -27,7 +27,7 @@ def get_readable_size(bytes_value: float) -> str:
     return f"{bytes_value:.2f} TB"
 
 
-def fetch_processes(top: int = 10) -> list[dict[str, Any]]:
+def fetch_processes(top: int = 0) -> list[dict[str, Any]]:
     processes = []
 
     attrs = ["pid", "name", "username", "cpu_percent", "memory_percent", "status"]
@@ -44,9 +44,7 @@ def fetch_processes(top: int = 10) -> list[dict[str, Any]]:
             continue
 
     if top > 0:
-        return sorted(processes, key=lambda proc: proc["cpu_percent"], reverse=True)[
-            :top
-        ]
+        return sorted(processes, key=lambda proc: proc["cpu_percent"], reverse=True)[:top]
 
     return sorted(processes, key=lambda proc: proc["cpu_percent"], reverse=True)
 

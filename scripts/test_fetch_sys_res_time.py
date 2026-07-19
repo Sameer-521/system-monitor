@@ -1,10 +1,10 @@
 import time
-from app.system_info import fetch_system_resources
+from app.engine.pipeline import fetch_system_resources
 
 
 def measure():
     start = time.monotonic()
-    res = fetch_system_resources()
+    _ = fetch_system_resources()
     end = time.monotonic()
     return round(end - start, 4)
 

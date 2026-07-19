@@ -104,9 +104,7 @@ async def main():
     print("=== Issuing tickets ===")
 
     async with httpx.AsyncClient() as client:
-        tickets = await asyncio.gather(
-            *(issue_ticket(client, u["name"]) for u in USERS)
-        )
+        tickets = await asyncio.gather(*(issue_ticket(client, u["name"]) for u in USERS))
 
     if any(t is None for t in tickets):
         print("ERROR: One or more tickets could not be obtained. Aborting.")

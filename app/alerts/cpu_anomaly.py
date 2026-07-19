@@ -12,13 +12,11 @@ class CpuAnomalyAlert:
     STREAK: int = 6
 
     def __init__(self) -> None:
-        self.buffer = BucketedRingBuffer(
-            bucket_size=self.BUCKET_SIZE, max_buckets=self.MAX_BUCKETS
-        )
+        self.buffer = BucketedRingBuffer(bucket_size=self.BUCKET_SIZE, max_buckets=self.MAX_BUCKETS)
         self.streak = Counter(0)
         self.streak_miss = Counter(0)
 
-    def evaluate(self, snapshot: dict, timestamp: float) -> list[Alert]:
+    def evaluate(self, snapshot: dict) -> list[Alert]:
         new_usage = snapshot["cpu"]["usage_percentage"]
         alerts = []
         current_avg = self.buffer.feed(new_usage)

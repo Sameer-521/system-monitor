@@ -11,5 +11,5 @@ class HighCpuAlert:
         self.buffer = RingBuffer("cpu")
         self.streak = Counter(0)
 
-    def evaluate(self, snapshot: dict, timestamp: float) -> list[Alert]:
+    def evaluate(self, snapshot: dict) -> list[Alert]:
         raise NotImplementedError

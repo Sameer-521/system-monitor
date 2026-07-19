@@ -11,7 +11,7 @@ def _fetch_cpu_info() -> dict[str, Any]:
     num_cores = psutil.cpu_count() or 0
 
     load_avg = psutil.getloadavg()
-    load_per_cpu = [(x / float(num_cores)) * 100 for x in load_avg]
+    load_per_cpu = [round((x / float(num_cores)) * 100, 2) for x in load_avg]
     min_times = ["1min", "5min", "15min"]
 
     core_temps = psutil.sensors_temperatures().get("coretemp", [])
