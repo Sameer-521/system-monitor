@@ -10,6 +10,7 @@ wheels/
 .venv
 
 TODO.md
+CPU_ALERTS.md
+ALERTS_TODO.md
 dummy_client.py
-test*
 *.jsonl

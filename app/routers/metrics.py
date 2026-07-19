@@ -6,17 +6,14 @@ from fastapi.sse import EventSourceResponse
 
 from app.pubsub import Subscription
 from app.schema import MetricsParams
-from app.system_info import (
-    fetch_process_by_pid,
-    fetch_processes,
-    _fetch_cpu_info,
-    _fetch_disk_info,
-    _fetch_mem_info,
-    fetch_system_resources,
-)
+from app.collectors.cpu import _fetch_cpu_info
+from app.collectors.memory import _fetch_mem_info
+from app.collectors.disk import _fetch_disk_info
+from app.collectors.process import fetch_processes, fetch_process_by_pid
 from app.shared import sub_lock, client_subs
 from app.ticket import TicketStore
 from app.settings import _settings
+from app.engine.pipeline import fetch_system_resources
 
 
 from fastapi import APIRouter

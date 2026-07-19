@@ -7,7 +7,7 @@ from fastapi.sse import ServerSentEvent
 
 from app.schema import Snapshot
 from app.settings import _settings
-from app.system_info import fetch_system_resources
+from app.engine.pipeline import fetch_system_resources
 
 DEFAULT_FILTERS = ["timestamp", "hostname", "uptime_seconds"]
 
@@ -20,7 +20,7 @@ class Subscription:
         self._filters = _filters
 
     async def consumer(self, id: str) -> AsyncIterable[ServerSentEvent]:
-        print(f"In consumer: {id}")
+        # print(f"In consumer: {id}")
         while True:
             payload: dict[str, Any] = await self.queue.get()
             keys_to_send = DEFAULT_FILTERS + self._filters
