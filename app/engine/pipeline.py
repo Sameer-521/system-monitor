@@ -8,10 +8,11 @@ import psutil
 from app.collectors.cpu import _fetch_cpu_info
 from app.collectors.memory import _fetch_mem_info
 from app.collectors.disk import _fetch_disk_info
-from app.alerts.cpu_anomaly import CpuAnomalyAlert
 from app.alerts.registry import AlertRegistry
+from app.alerts.cpu_anomaly import CpuAnomalyAlert
+from app.alerts.high_load_avg import HighLoadAvg
 
-alerts_registry = AlertRegistry([CpuAnomalyAlert()])
+alerts_registry = AlertRegistry([CpuAnomalyAlert(), HighLoadAvg()])
 
 
 def fetch_system_resources() -> dict[str, str | dict[str, Any] | list[dict]]:

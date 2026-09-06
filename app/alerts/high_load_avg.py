@@ -1,7 +1,14 @@
 import psutil
+from enum import Enum
 from collections import deque
 
 from app.models.alert import Alert, AlertLevel, AlertState
+
+
+class LoadAvgState(Enum):
+    OK = "ok"
+    WARNING = "warning"
+    CRITICAL = "critical"
 
 
 class HighLoadAvg:
@@ -14,8 +21,13 @@ class HighLoadAvg:
     critical_threshold: float = num_cpus * CRITICAL_MULTIPLIER
 
     SAMPLES: int = 10
+
+    # M means max num of values for the specific metric
     M_WARNING_TICKS: int = 18
     M_CRITICAL_TICKS: int = 12
+
+    M_WARNING_RECOVERY_TICKS: int = 30
+    M_CRITICAL_RECOVERY_TICKS: int = 6
 
     N_WARNING_TRIGGER_TICKS: int = 14  # 14 of 18
     N_CRITICAL_TRIGGER_TICKS: int = 9  # 9 of 12
@@ -23,15 +35,15 @@ class HighLoadAvg:
     N_CRITICAL_RECOVERY_TICKS: int = 5  # 5 of 6
 
     def __init__(self) -> None:
-        self.state = "ok"
+        self.state: LoadAvgState = LoadAvgState.OK
 
         self.buffer: deque[tuple[float, float]] = deque(maxlen=self.SAMPLES)
 
         self.critical_ticks: deque[bool] = deque(maxlen=self.M_CRITICAL_TICKS)
-        self.critical_recovery_ticks: deque[bool] = deque(maxlen=6)
+        self.critical_recovery_ticks: deque[bool] = deque(maxlen=self.M_CRITICAL_RECOVERY_TICKS)
 
         self.warning_ticks: deque[bool] = deque(maxlen=self.M_WARNING_TICKS)
-        self.warning_recovery_ticks: deque[bool] = deque(maxlen=30)
+        self.warning_recovery_ticks: deque[bool] = deque(maxlen=self.M_WARNING_RECOVERY_TICKS)
 
     def transition_phase1(self, w_avg: float, alerts: list):
         """
@@ -52,9 +64,12 @@ class HighLoadAvg:
             self.warning_ticks.append(True)
             self.warning_recovery_ticks.append(False)
 
-            if sum(self.warning_ticks) >= self.N_WARNING_TRIGGER_TICKS and self.state == "ok":
+            if (
+                sum(self.warning_ticks) >= self.N_WARNING_TRIGGER_TICKS
+                and self.state == LoadAvgState.OK
+            ):
                 # ok -> warning
-                self.state = "warning"
+                self.state = LoadAvgState.WARNING
                 self.warning_recovery_ticks.clear()
                 new_alert = Alert(
                     metric="load_average",
@@ -73,19 +88,19 @@ class HighLoadAvg:
                 alerts.append(new_alert)
 
         else:
-            if self.state == "ok":
+            if self.state == LoadAvgState.OK:
                 # skip warning tick
                 self.warning_ticks.append(False)
 
-            if self.state in ["warning", "critical"] and w_avg < self.NORMAL:
+            if self.state in [LoadAvgState.WARNING, LoadAvgState.CRITICAL] and w_avg < self.NORMAL:
                 # the check on critical is to make sure warning_recovery_ticks still land
                 self.warning_recovery_ticks.append(True)
                 if (
                     sum(self.warning_recovery_ticks) >= self.N_WARNING_RECOVERY_TICKS
-                    and self.state == "warning"
+                    and self.state == LoadAvgState.WARNING
                 ):
                     # warning -> ok
-                    self.state = "ok"
+                    self.state = LoadAvgState.OK
                     self.warning_ticks.clear()
             else:  # ok
                 self.warning_recovery_ticks.append(False)
@@ -114,11 +129,11 @@ class HighLoadAvg:
             self.critical_recovery_ticks.append(False)
 
             if sum(self.critical_ticks) >= self.N_CRITICAL_TRIGGER_TICKS and self.state in [
-                "ok",
-                "warning",
+                LoadAvgState.OK,
+                LoadAvgState.WARNING,
             ]:
                 # ok / warning -> critical
-                self.state = "critical"
+                self.state = LoadAvgState.CRITICAL
                 self.critical_recovery_ticks.clear()
                 self.critical_ticks.clear()
                 self.warning_ticks.clear()
@@ -143,12 +158,12 @@ class HighLoadAvg:
                     alerts.append(new_alert)
         else:
             self.critical_ticks.append(False)
-            if self.state == "critical":
+            if self.state == LoadAvgState.CRITICAL:
                 if c_avg < self.warning_threshold:
                     self.critical_recovery_ticks.append(True)
                     if sum(self.critical_recovery_ticks) >= self.N_CRITICAL_RECOVERY_TICKS:
                         # critical -> warning
-                        self.state = "warning"
+                        self.state = LoadAvgState.WARNING
                         self.critical_recovery_ticks.clear()
                         self.critical_ticks.clear()
                 else:
@@ -156,9 +171,9 @@ class HighLoadAvg:
 
     def evaluate(self, snapshot: dict) -> list[Alert]:
         alerts = []
-        new_load_avgs: dict[str, float] = snapshot["cpu"].get("load_average", {})
-        new_load_avgs.pop("15min")
-        c_tick, w_tick = [float(v) for v in new_load_avgs.values()]
+        new_load_avgs: dict[str, float] = snapshot["cpu"]["load_average"]
+        c_tick = new_load_avgs["1min"]
+        w_tick = new_load_avgs["5min"]
 
         self.buffer.append((c_tick, w_tick))
 
