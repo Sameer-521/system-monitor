@@ -216,11 +216,11 @@ def test_cpu_anomaly_trigger_on_sustained_spike(mock_baseline_buckets):
 
     dummy_snapshot = {"cpu": {"usage_percentage": new_usage}}
     for _ in range(9):
-        result = cpu_alert.evaluate(dummy_snapshot, timestamp=0.0)
+        result = cpu_alert.evaluate(dummy_snapshot)
         assert result == [], f"Expected no alert for partial bucket, got {result}"
 
     # current bucket full -> should trigger
-    result = cpu_alert.evaluate(dummy_snapshot, timestamp=0.0)
+    result = cpu_alert.evaluate(dummy_snapshot)
 
     # verify
     median = statistics.median(cpu_alert.buffer.buckets)
@@ -248,11 +248,11 @@ def test_cpu_anomaly_no_trigger(mock_baseline_buckets):
 
     dummy_snapshot = {"cpu": {"usage_percentage": new_usage}}
     for _ in range(9):
-        result = cpu_alert.evaluate(dummy_snapshot, timestamp=0.0)
+        result = cpu_alert.evaluate(dummy_snapshot)
         assert result == [], f"Expected no alert for partial bucket, got {result}"
 
     # current bucket full -> should not trigger
-    result = cpu_alert.evaluate(dummy_snapshot, timestamp=0.0)
+    result = cpu_alert.evaluate(dummy_snapshot)
 
     # verify
     median = statistics.median(cpu_alert.buffer.buckets)

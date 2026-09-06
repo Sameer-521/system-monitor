@@ -11,6 +11,7 @@ class AlertLevel(Enum):
 
 
 class AlertState(Enum):
+    OK = "ok"
     FIRING = "firing"
     ACKED = "acknowledged"
     RESOLVED = "resolved"

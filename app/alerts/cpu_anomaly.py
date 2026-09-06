@@ -19,7 +19,7 @@ class CpuAnomalyAlert:
     def evaluate(self, snapshot: dict) -> list[Alert]:
         new_usage = snapshot["cpu"]["usage_percentage"]
         alerts = []
-        current_avg = self.buffer.feed(new_usage)
+        current_avg = self.buffer.feed(new_usage)  # feed here
 
         if current_avg is not None and self.buffer.ready():
             stdv = statistics.stdev(self.buffer.buckets)

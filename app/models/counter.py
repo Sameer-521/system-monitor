@@ -7,6 +7,8 @@ class Counter:
         return self.value
 
     def decrement(self, amount: int = 1) -> int:
+        if self.value == 0:
+            return self.value
         self.value -= amount
         return self.value
 

@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from app.shared import latest_snapshot, client_subs, sub_lock
 from app.pubsub import broadcast, poller
 from app.schema import Register
-from app.settings import _settings
+from app.settings import _settings  # noqa: F401
 from app.routers import metrics
 
 # TODO: add logging and replace print statements
@@ -44,8 +44,6 @@ async def root():
 async def register(request: Request, user: Register):
     username: str = user.model_dump().get("username", "")
     if username in request.app.state.clients:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, detail={"error": "user already exists"}
-        )
+        raise HTTPException(status.HTTP_409_CONFLICT, detail={"error": "user already exists"})
     request.app.state.clients.add(username)
     print(f"Client: {username}")
