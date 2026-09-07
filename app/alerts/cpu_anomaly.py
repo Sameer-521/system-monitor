@@ -9,7 +9,7 @@ class CpuAnomalyAlert:
     BUCKET_SIZE: int = 10
     MAX_BUCKETS: int = 30
     Z_THRESHOLD: float = 3.0
-    STREAK: int = 3
+    STREAK: int = 2
 
     def __init__(self) -> None:
         self.buffer = BucketedRingBuffer(bucket_size=self.BUCKET_SIZE, max_buckets=self.MAX_BUCKETS)
@@ -27,8 +27,7 @@ class CpuAnomalyAlert:
             z = 0 if stdv == 0 else abs(current_avg - median) / stdv
             if z >= self.Z_THRESHOLD:
                 self.streak.increment()
-                # 1 bucket = 10s of data, 30 buckets = 10s * 30
-                # a single streak is 10s of history, 6 medians 60s -> 1 min
+                # 1 bucket = 10s of data; STREAK buckets of z>=3 before firing
                 if self.streak.value >= self.STREAK:
                     new_alert = Alert(
                         metric="cpu_anomaly",
@@ -41,5 +40,4 @@ class CpuAnomalyAlert:
                 self.streak_miss.increment()
                 if self.streak_miss.value >= 2:
                     self.streak.reset()
-
         return alerts
