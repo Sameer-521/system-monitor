@@ -1,15 +1,15 @@
+import statistics
+
 from app.models.alert import Alert, AlertLevel, AlertState
 from app.models.buffer import BucketedRingBuffer
 from app.models.counter import Counter
-
-import statistics
 
 
 class CpuAnomalyAlert:
     BUCKET_SIZE: int = 10
     MAX_BUCKETS: int = 30
     Z_THRESHOLD: float = 3.0
-    STREAK: int = 6
+    STREAK: int = 3
 
     def __init__(self) -> None:
         self.buffer = BucketedRingBuffer(bucket_size=self.BUCKET_SIZE, max_buckets=self.MAX_BUCKETS)
@@ -37,8 +37,9 @@ class CpuAnomalyAlert:
                         state=AlertState.FIRING,
                     )
                     alerts.append(new_alert)
-            self.streak_miss.increment()
-            if self.streak_miss.value >= 2:
-                self.streak.reset()
+            else:
+                self.streak_miss.increment()
+                if self.streak_miss.value >= 2:
+                    self.streak.reset()
 
         return alerts
