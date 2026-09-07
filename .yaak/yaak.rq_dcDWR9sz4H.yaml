@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_dcDWR9sz4H
+createdAt: 2026-09-06T23:09:33.929333480
+updatedAt: 2026-09-06T23:12:38.245923176
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get Memory Info
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/metrics/memory
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

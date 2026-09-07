@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_uYGrNPizCg
+createdAt: 2026-09-06T23:10:43.845888056
+updatedAt: 2026-09-06T23:12:11.403194756
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get Disk Info
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/metrics/disk
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

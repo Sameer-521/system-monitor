@@ -1,0 +1,40 @@
+type: http_request
+model: http_request
+id: rq_U9t3PRYFtq
+createdAt: 2026-09-06T23:17:05.476995281
+updatedAt: 2026-09-06T23:53:37.289756325
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get Process Info
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/metrics/process?pid=1
+urlParameters:
+- enabled: true
+  name: ''
+  value: ''
+  id: vkbRjju0jB
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

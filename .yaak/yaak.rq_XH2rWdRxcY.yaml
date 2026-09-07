@@ -1,0 +1,72 @@
+type: http_request
+model: http_request
+id: rq_XH2rWdRxcY
+createdAt: 2026-09-06T23:59:06.579697698
+updatedAt: 2026-09-07T00:23:04.233712960
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers:
+- enabled: true
+  name: x-ticket
+  value: c500011e-a2c2-4b1e-91ed-fcaeb61712c2
+  id: wPBTS5ctgc
+- enabled: true
+  name: ''
+  value: ''
+  id: qDXMtj2MTf
+method: GET
+name: Stream System Resources
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/metrics/stream/Sameer
+urlParameters:
+- enabled: true
+  name: cpu
+  value: 'true'
+  id: 25mAh2iXDi
+- enabled: true
+  name: memory
+  value: 'false'
+  id: qYaahiWXYv
+- enabled: true
+  name: disk
+  value: 'false'
+  id: NUeNx9EzsF
+- enabled: true
+  name: alerts
+  value: 'true'
+  id: TdR9deRngT
+- enabled: true
+  name: network
+  value: 'false'
+  id: xHdrZX5Tn7
+- enabled: true
+  name: processes
+  value: 'false'
+  id: yiGZGbu67S
+- enabled: true
+  name: ''
+  value: ''
+  id: 63RtXBV7ja
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

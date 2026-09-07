@@ -1,0 +1,40 @@
+type: http_request
+model: http_request
+id: rq_9a3RZw6iKb
+createdAt: 2026-09-06T23:08:09.216561787
+updatedAt: 2026-09-07T00:20:37.989412753
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Get CPU Info
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/metrics/cpu
+urlParameters:
+- enabled: true
+  name: ''
+  value: ''
+  id: bkUPkBw57X
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

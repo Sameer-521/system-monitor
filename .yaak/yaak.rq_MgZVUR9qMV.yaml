@@ -1,0 +1,44 @@
+type: http_request
+model: http_request
+id: rq_MgZVUR9qMV
+createdAt: 2026-09-06T23:55:01.889290407
+updatedAt: 2026-09-07T00:02:13.980444959
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: POST
+name: Issue Ticket
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/metrics/stream/ticket/:user_id
+urlParameters:
+- enabled: true
+  name: :user_id
+  value: Sameer
+  id: path-placeholder:0
+- enabled: true
+  name: ''
+  value: ''
+  id: F37tVGAVJP
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto

@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_UvKyLovsAR
+createdAt: 2026-09-06T23:01:13.528773655
+updatedAt: 2026-09-06T23:07:59.060973129
+workspaceId: wk_tozfGdmcW9
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Root Page
+sortPriority: -1788735673526.0
+url: ${[ BASE_URL ]}/
+urlParameters: []
+settingSendCookies:
+  enabled: false
+  value: true
+settingStoreCookies:
+  enabled: false
+  value: true
+settingValidateCertificates:
+  enabled: false
+  value: true
+settingFollowRedirects:
+  enabled: false
+  value: true
+settingRequestTimeout:
+  enabled: false
+  value: 0
+settingHttpVersion:
+  enabled: false
+  value: auto
