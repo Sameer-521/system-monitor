@@ -1,52 +1,49 @@
 import asyncio
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Path, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.sse import EventSourceResponse
 
-from app.pubsub import Subscription
-from app.schema import MetricsParams
 from app.collectors.cpu import _fetch_cpu_info
-from app.collectors.memory import _fetch_mem_info
 from app.collectors.disk import _fetch_disk_info
-from app.collectors.process import fetch_processes, fetch_process_by_pid
-from app.shared import sub_lock, client_subs
-from app.ticket import TicketStore
-from app.settings import _settings
+from app.collectors.memory import _fetch_mem_info
+from app.collectors.process import fetch_process_by_pid, fetch_processes
 from app.engine.pipeline import fetch_system_resources
-
-
-from fastapi import APIRouter
+from app.pubsub import Subscription
+from app.schema import MetricsParams, ProcessPidParam
+from app.settings import _settings
+from app.shared import client_subs, sub_lock
+from app.ticket import TicketStore
 
 tickets_store = TicketStore(_settings.ticket_lifetime)
 metrics_router = APIRouter(prefix="/metrics")
 
 
-@metrics_router.get("/stream/{id}", response_class=EventSourceResponse)
+@metrics_router.get("/stream/{user_id}", response_class=EventSourceResponse)
 async def stream_all(
     request: Request,
-    id: str,
+    user_id: str,
     metrics_filters: Annotated[MetricsParams, Query()],
     valid_ticket=Depends(tickets_store.verify_ticket_header),
 ):
     _filters = [str(key) for key, val in metrics_filters.model_dump().items() if val]
     # drop existing sub if any
     async with sub_lock:
-        old_sub = client_subs.get(id, None)
+        old_sub = client_subs.get(user_id, None)
         if old_sub is not None:
-            _ = client_subs.pop(id, None)
+            _ = client_subs.pop(user_id, None)
 
-        sub = Subscription(id, _filters)
-        client_subs[id] = sub
+        sub = Subscription(user_id, _filters)
+        client_subs[user_id] = sub
         # print(client_subs)
 
     try:
-        async for event in sub.consumer(id):
+        async for event in sub.consumer(user_id):
             yield event
     finally:
         async with sub_lock:
-            print(f"client: {id} disconnected from stream")
-            _ = client_subs.pop(id, None)
+            print(f"client: {user_id} disconnected from stream")
+            _ = client_subs.pop(user_id, None)
 
 
 @metrics_router.post("/stream/ticket/{user_id}")
@@ -91,9 +88,9 @@ async def get_all_processes():
     return {"response": data}
 
 
-@metrics_router.get("/processes/{pid}")
-async def get_process_by_pid(pid: Annotated[int, Path(ge=1)]):
-    result = await asyncio.to_thread(fetch_process_by_pid, pid)
+@metrics_router.get("/process")
+async def get_process_by_pid(pid: Annotated[ProcessPidParam, Query()]):
+    result = await asyncio.to_thread(fetch_process_by_pid, pid.pid)
     if isinstance(result, Exception):
         raise result
     return {"response": result}

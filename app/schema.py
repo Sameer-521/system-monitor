@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PositiveInt
 
 
 class Register(BaseModel):
@@ -19,12 +19,17 @@ class TicketHeader(BaseModel):
     x_ticket: str
 
 
+class ProcessPidParam(BaseModel):
+    model_config = {"extra": "forbid"}
+    pid: PositiveInt
+
+
 class MetricsParams(BaseModel):
     model_config = {"extra": "forbid"}
-    cpu: bool = Field(default=False)
-    memory: bool = Field(default=False)
-    disk: bool = Field(default=False)
-    network: bool = Field(default=False)
+    cpu: bool = Field(default=True)
+    memory: bool = Field(default=True)
+    disk: bool = Field(default=True)
+    network: bool = Field(default=True)
     processes: bool = Field(default=False)
     containers: bool = Field(default=False)
-    alerts: bool = Field(default=False)
+    alerts: bool = Field(default=True)
