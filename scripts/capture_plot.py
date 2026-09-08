@@ -56,7 +56,7 @@ async def capture(duration: int, done: asyncio.Event) -> None:
                                 if isinstance(data, str):
                                     data = json.loads(data)
                                 info = data["info"]
-                            except json.JSONDecodeError, KeyError, TypeError:
+                            except (json.JSONDecodeError, KeyError, TypeError):
                                 continue
                             fh.write(json.dumps(info) + "\n")
         except httpx.HTTPStatusError as e:

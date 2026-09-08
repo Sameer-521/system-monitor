@@ -40,7 +40,7 @@ def fetch_processes(top: int = 0) -> list[dict[str, Any]]:
             p_info["memory_percent"] = round(p_info["memory_percent"], 1)
 
             processes.append(p_info)
-        except psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess:
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
 
     if top > 0:
