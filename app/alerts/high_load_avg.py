@@ -45,7 +45,7 @@ class HighLoadAvg:
         self.warning_ticks: deque[bool] = deque(maxlen=self.M_WARNING_TICKS)
         self.warning_recovery_ticks: deque[bool] = deque(maxlen=self.M_WARNING_RECOVERY_TICKS)
 
-    def transition_phase1(self, w_avg: float, alerts: list):
+    def transition_phase1(self, w_avg: float, alerts: list[Alert]) -> None:
         """
         5-min load-avg phase (ok <-> warning).
 
@@ -102,10 +102,24 @@ class HighLoadAvg:
                     # warning -> ok
                     self.state = LoadAvgState.OK
                     self.warning_ticks.clear()
+                    new_alert = Alert(
+                        metric="load_average",
+                        severity=AlertLevel.INFO,
+                        message=(
+                            f"5m load average {w_avg:.2f} back to normal (below {self.NORMAL:.2f}) — resolved"
+                        ),
+                        state=AlertState.RESOLVED,
+                        extra={
+                            "load_avg_5m": w_avg,
+                            "threshold": self.NORMAL,
+                            "window": f"{self.N_WARNING_RECOVERY_TICKS}/{self.M_WARNING_RECOVERY_TICKS} ticks",
+                        },
+                    )
+                    alerts.append(new_alert)
             else:  # ok
                 self.warning_recovery_ticks.append(False)
 
-    def transition_phase2(self, c_avg, alerts):
+    def transition_phase2(self, c_avg: float, alerts: list[Alert]) -> None:
         """
         1-min load-avg phase (ok/warning <-> critical).
 
@@ -166,6 +180,21 @@ class HighLoadAvg:
                         self.state = LoadAvgState.WARNING
                         self.critical_recovery_ticks.clear()
                         self.critical_ticks.clear()
+                        new_alert = Alert(
+                            metric="load_average",
+                            severity=AlertLevel.WARNING,
+                            message=(
+                                f"1m load average {c_avg:.2f} recovered below critical threshold "
+                                f"{self.critical_threshold:.2f} — de-escalating to warning"
+                            ),
+                            state=AlertState.FIRING,
+                            extra={
+                                "load_avg_1m": c_avg,
+                                "threshold": self.warning_threshold,
+                                "window": f"{self.N_CRITICAL_RECOVERY_TICKS}/{self.M_CRITICAL_RECOVERY_TICKS} ticks",
+                            },
+                        )
+                        alerts.append(new_alert)
                 else:
                     self.critical_recovery_ticks.append(False)
 
