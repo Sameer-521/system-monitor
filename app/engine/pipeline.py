@@ -5,12 +5,12 @@ from typing import Any
 
 import psutil
 
-from app.collectors.cpu import _fetch_cpu_info
-from app.collectors.memory import _fetch_mem_info
-from app.collectors.disk import _fetch_disk_info
-from app.alerts.registry import AlertRegistry
 from app.alerts.cpu_anomaly import CpuAnomalyAlert
 from app.alerts.high_load_avg import HighLoadAvg
+from app.alerts.registry import AlertRegistry
+from app.collectors.cpu import fetch_cpu_info
+from app.collectors.disk import fetch_disk_info
+from app.collectors.memory import fetch_mem_info
 
 alerts_registry = AlertRegistry([CpuAnomalyAlert(), HighLoadAvg()])
 
@@ -28,9 +28,9 @@ def fetch_system_resources() -> dict[str, str | dict[str, Any] | list[dict]]:
         "disk": {},
     }
 
-    resources["cpu"] = _fetch_cpu_info()
-    resources["memory"] = _fetch_mem_info()
-    resources["disk"] = _fetch_disk_info()
+    resources["cpu"] = fetch_cpu_info()
+    resources["memory"] = fetch_mem_info()
+    resources["disk"] = fetch_disk_info()
 
     resources["alerts"] = alerts_registry.evaluate(resources)
 

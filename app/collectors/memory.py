@@ -3,10 +3,10 @@ from typing import Any
 import psutil
 
 from app.buffers import mem_buffer
-from app.collectors.process import get_readable_size
+from app.collectors.utils import get_readable_size
 
 
-def _fetch_mem_info() -> dict[str, Any]:
+def fetch_mem_info() -> dict[str, Any]:
     memory = psutil.virtual_memory()
     swap_memory = psutil.swap_memory()
 

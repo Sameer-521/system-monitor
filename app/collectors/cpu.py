@@ -5,7 +5,7 @@ import psutil
 from app.buffers import cpu_buffer
 
 
-def _fetch_cpu_info() -> dict[str, Any]:
+def fetch_cpu_info() -> dict[str, Any]:
     cpu_percent = round(psutil.cpu_percent(), 1)
     cpu_freq = [round(freq.current, 1) for freq in psutil.cpu_freq(percpu=True)]
     num_cores = psutil.cpu_count() or 0

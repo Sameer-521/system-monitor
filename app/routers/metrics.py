@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.sse import EventSourceResponse
 
-from app.collectors.cpu import _fetch_cpu_info
-from app.collectors.disk import _fetch_disk_info
-from app.collectors.memory import _fetch_mem_info
+from app.collectors.cpu import fetch_cpu_info
+from app.collectors.disk import fetch_disk_info
+from app.collectors.memory import fetch_mem_info
 from app.collectors.process import fetch_process_by_pid, fetch_processes
 from app.engine.pipeline import fetch_system_resources
 from app.pubsub import Subscription
@@ -24,7 +24,7 @@ async def stream_all(
     request: Request,
     user_id: str,
     metrics_filters: Annotated[MetricsParams, Query()],
-    valid_ticket=Depends(tickets_store.verify_ticket_header),
+    valid_ticket: bool = Depends(tickets_store.verify_ticket_header),
 ):
     _filters = [str(key) for key, val in metrics_filters.model_dump().items() if val]
     # drop existing sub if any
@@ -66,19 +66,19 @@ async def get_all_resources():
 
 @metrics_router.get("/cpu")
 async def get_cpu_info():
-    data = await asyncio.to_thread(_fetch_cpu_info)
+    data = await asyncio.to_thread(fetch_cpu_info)
     return {"response": data}
 
 
 @metrics_router.get("/memory")
 async def get_memory_info():
-    data = await asyncio.to_thread(_fetch_mem_info)
+    data = await asyncio.to_thread(fetch_mem_info)
     return {"response": data}
 
 
 @metrics_router.get("/disk")
 async def get_disk_info():
-    data = await asyncio.to_thread(_fetch_disk_info)
+    data = await asyncio.to_thread(fetch_disk_info)
     return {"response": data}
 
 

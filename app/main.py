@@ -3,11 +3,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 
-from app.shared import latest_snapshot, client_subs, sub_lock
 from app.pubsub import broadcast, poller
-from app.schema import Register
-from app.settings import _settings  # noqa: F401
 from app.routers import metrics
+from app.schema import Register
+from app.shared import client_subs, latest_snapshot, sub_lock
 
 # TODO: add logging and replace print statements
 

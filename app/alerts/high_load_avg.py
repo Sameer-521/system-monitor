@@ -1,6 +1,7 @@
-import psutil
-from enum import Enum
 from collections import deque
+from enum import Enum
+
+import psutil
 
 from app.models.alert import Alert, AlertLevel, AlertState
 
@@ -47,17 +48,8 @@ class HighLoadAvg:
 
     def transition_phase1(self, w_avg: float, alerts: list[Alert]) -> None:
         """
-        5-min load-avg phase (ok <-> warning).
-
-        Trigger path (state == ok):
-            w_avg >= `warning_threshold` appends True to warning_ticks, else False;
-            ok -> warning fires on `N_WARNING_TRIGGER_TICKS` of the last `M_WARNING_TICKS` ticks breaching.
-
-        Recovery path (state in warning/critical):
-            each tick classifies w_avg against NORMAL (1.0c):
-            below -> True, else False.
-            warning -> ok fires on `N_WARNING_RECOVERY_TICKS` of the last 30 ticks below NORMAL.
-            Gated on state == "warning", so in critical it only accrues.
+        transition between ok and warning.
+        can escalate from ok to critical.
         """
         # ok - warning phase
         if w_avg >= self.warning_threshold:
@@ -121,21 +113,8 @@ class HighLoadAvg:
 
     def transition_phase2(self, c_avg: float, alerts: list[Alert]) -> None:
         """
-        1-min load-avg phase (ok/warning <-> critical).
-
-        Trigger path (state in (ok, warning)):
-            hot ticks (c_avg >= `critical_threshold`) append True to critical_ticks;
-            ok/warning -> critical fires on `N_CRITICAL_TRIGGER_TICKS` of the last
-            `M_CRITICAL_TICKS` hot ticks. On entry all four windows are cleared:
-            the 5-min phase pauses (but keeps observing) and both critical windows
-            start fresh.
-
-        Recovery path (state == critical):
-            each tick classifies c_avg against `warning_threshold` (1.5c):
-            below -> True, else False (the critical -> critical self-loop).
-            critical -> warning fires on `N_CRITICAL_RECOVERY_TICKS` of the last
-            6 ticks below 1.5c; the critical windows are cleared on exit while
-            accrued 5-min recovery progress carries over to warning.
+        Transition between warning and critical.
+        Can only de-escalate critical to warning and not critical to normal.
         """
         # critical phase
         if c_avg >= self.critical_threshold:

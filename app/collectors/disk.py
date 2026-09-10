@@ -2,10 +2,10 @@ from typing import Any
 
 import psutil
 
-from app.collectors.process import get_readable_size
+from app.collectors.utils import get_readable_size
 
 
-def _fetch_disk_info() -> list[dict[str, Any]]:
+def fetch_disk_info() -> list[dict[str, Any]]:
     partitions = psutil.disk_partitions()
 
     p_info = []
