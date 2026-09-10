@@ -13,7 +13,6 @@ class AlertLevel(Enum):
 class AlertState(Enum):
     OK = "ok"
     FIRING = "firing"
-    ACKED = "acknowledged"
     RESOLVED = "resolved"
 
 
@@ -25,20 +24,3 @@ class Alert:
     state: AlertState
     fired_at: float = field(default_factory=time.monotonic)
     extra: dict = field(default_factory=dict)
-
-
-class AlertsManager:
-    def __init__(self) -> None:
-        self.alerts: dict[str, Alert] = {}
-
-    def register_alert(self, alert: Alert) -> bool:
-        stored = self.alerts.get(alert.metric, None)
-
-        if stored and stored.state == AlertState.FIRING:
-            return False
-        alert.state = AlertState.FIRING
-        self.alerts[alert.metric] = alert
-        return True
-
-    def view_alerts(self) -> None:
-        print(self.alerts)

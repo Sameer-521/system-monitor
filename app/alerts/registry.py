@@ -1,18 +1,7 @@
 import time
 
-from app.models.alert import Alert, AlertLevel, AlertState
+from app.models.alert import Alert, AlertState
 from app.alerts.base import AlertEvaluator
-
-
-def int_value(severity: AlertLevel) -> int:
-    map: dict[AlertLevel, int] = {
-        AlertLevel.INFO: 1,
-        AlertLevel.DEBUG: 2,
-        AlertLevel.WARNING: 3,
-        AlertLevel.CRITICAL: 4,
-    }
-
-    return map[severity]
 
 
 class AlertRegistry:
@@ -31,7 +20,7 @@ class AlertRegistry:
             if alert.metric in self.alerts_store:
                 old_alert: Alert = self.alerts_store[alert.metric]["content"]
 
-                if alert.state == AlertState.RESOLVED:
+                if alert.state == AlertState.RESOLVED and old_alert.state != AlertState.RESOLVED:
                     self.alerts_store[alert.metric] = {
                         "content": alert,
                         "cooldown_till": alert.fired_at + self.cooldown,
@@ -75,4 +64,4 @@ class AlertRegistry:
         alerts: list[Alert] = []
         for evaluator in self.evaluators:
             alerts.extend(evaluator.evaluate(snapshot))
-        return alerts
+        return self.manage(alerts)

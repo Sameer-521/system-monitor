@@ -1,6 +1,6 @@
 from app.models.buffer import RingBuffer, BucketedRingBuffer
 from app.models.counter import Counter
-from app.models.alert import Alert, AlertLevel, AlertState, AlertsManager
+from app.models.alert import Alert, AlertLevel, AlertState
 
 __all__ = [
     "RingBuffer",
@@ -9,5 +9,4 @@ __all__ = [
     "Alert",
     "AlertLevel",
     "AlertState",
-    "AlertsManager",
 ]
