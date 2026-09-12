@@ -7,12 +7,13 @@ import psutil
 
 from app.alerts.cpu_anomaly import CpuAnomalyAlert
 from app.alerts.high_load_avg import HighLoadAvg
+from app.alerts.high_cpu_usage import HighCpuUsage
 from app.alerts.registry import AlertRegistry
 from app.collectors.cpu import fetch_cpu_info
 from app.collectors.disk import fetch_disk_info
 from app.collectors.memory import fetch_mem_info
 
-alerts_registry = AlertRegistry([CpuAnomalyAlert(), HighLoadAvg()])
+alerts_registry = AlertRegistry([CpuAnomalyAlert(), HighLoadAvg(), HighCpuUsage()])
 
 
 def fetch_system_resources() -> dict[str, str | dict[str, Any] | list[dict]]:

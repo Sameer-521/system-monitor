@@ -5,6 +5,7 @@ from app.alerts.registry import AlertRegistry
 from app.alerts.cpu_anomaly import CpuAnomalyAlert
 from app.alerts.high_memory import HighMemoryAlert
 from app.alerts.high_load_avg import HighLoadAvg
+from app.alerts.high_cpu_usage import HighCpuUsage
 
 __all__ = [
     "AlertEvaluator",
@@ -12,4 +13,5 @@ __all__ = [
     "CpuAnomalyAlert",
     "HighLoadAvg",
     "HighMemoryAlert",
+    "HighCpuUsage",
 ]
