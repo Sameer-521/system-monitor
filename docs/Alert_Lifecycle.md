@@ -12,29 +12,30 @@ snapshot's `alerts` key and stream to SSE clients.
 Evaluators own their detection and lifecycle decisions (hysteresis windows, state
 machines); the registry owns deduplication, escalation bookkeeping, resolution, and
 cooldown. Evaluators can emit on every tick without spamming — the manager collapses
-duplicates.
+duplicates. HighCpuUsage and HighIowait are thin configurations of the shared
+ThresholdAlert state machine (see Threshold_Alert_State_Machine.md).
 
 ## Flow
 
 ```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                               EVALUATION LAYER                                │
-│                                                                               │
-│         fetch_system_resources() ──► AlertRegistry.evaluate(snapshot)         │
-│                                       │                                       │
-│             ┌─────────────────────────┬─────────────────────────┐             │
-│             ▼                         ▼                         ▼             │
-│    ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐    │
-│    │ CpuAnomalyAlert │       │   HighLoadAvg   │       │  HighCpuUsage   │    │
-│    │ z-score vs      │       │ N-of-M tick     │       │ N-of-M bucket   │    │
-│    │ baseline        │       │ windows (1m/5m) │       │ windows (70/90) │    │
-│    │ cpu_anomaly     │       │ load_average    │       │ cpu_usage       │    │
-│    └────────┬────────┘       └────────┬────────┘       └────────┬────────┘    │
-│             │                         │                         │             │
-│             └─────────────────────────┼─────────────────────────┘             │
-│                                       ▼                                       │
-│          list[Alert]  (FIRING / RESOLVED, severity, message, extra)           │
-└───────────────────────────────────────┬───────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                                EVALUATION LAYER                                │
+│                                                                                │
+│         fetch_system_resources() ──► AlertRegistry.evaluate(snapshot)          │
+│                                                  │                             │
+│            ┌──────────────────┬──────────────────┼──────────────────┐          │
+│            ▼                  ▼                  ▼                  ▼          │
+│    ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  │
+│    │CpuAnomalyAlert│  │   HighLoadAvg │  │  HighCpuUsage │  │  HighIowait   │  │
+│    │ z-score vs    │  │ N-of-M tick   │  │ N-of-M bucket │  │ N-of-M bucket │  │
+│    │ baseline      │  │windows (1m/5m)│  │windows (70/90)│  │windows (30/50)│  │
+│    │ cpu_anomaly   │  │ load_average  │  │ cpu_usage     │  │ iowait        │  │
+│    └───────┬───────┘  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘  │
+│            │                  │                  │                  │          │
+│            └──────────────────┴──────────────────┼──────────────────┘          │
+│                                                  ▼                             │
+│           list[Alert]  (FIRING / RESOLVED, severity, message, extra)           │
+└────────────────────────────────────────────────────────────────────────────────┘
                                         ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │                                 MANAGER LAYER                                 │
@@ -53,7 +54,7 @@ duplicates.
 
 | field      | notes                                                          |
 | ---------- | -------------------------------------------------------------- |
-| `metric`   | storage/fan-out key: `cpu_anomaly`, `load_average`, `cpu_usage` |
+| `metric`   | storage/fan-out key: `cpu_anomaly`, `load_average`, `cpu_usage`, `iowait` |
 | `severity` | `INFO / DEBUG / WARNING / CRITICAL`                             |
 | `state`    | `OK / FIRING / RESOLVED` — resolved alerts carry severity INFO  |
 | `message`  | human-readable, includes observed values and thresholds         |
