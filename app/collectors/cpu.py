@@ -16,6 +16,9 @@ def fetch_cpu_info() -> dict[str, Any]:
     core_temps = psutil.sensors_temperatures().get("coretemp", [])
     core_temp = core_temps[0].current if len(core_temps) > 0 else None
 
+    cpu_times = psutil.cpu_times_percent(interval=None, percpu=True)
+    iowait = max((getattr(times, "iowait", 0.0) for times in cpu_times), default=0.0)
+
     cpu_buffer.contents.append(cpu_percent)
 
     return {
@@ -24,4 +27,5 @@ def fetch_cpu_info() -> dict[str, Any]:
         "cpu_freq": cpu_freq,
         "load_average": dict(zip(min_times, [round(x, 2) for x in load_avg])),
         "temp_celcius": core_temp,
+        "iowait": round(iowait, 1),
     }

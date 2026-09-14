@@ -1,4 +1,5 @@
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 
@@ -9,10 +10,20 @@ class RingBuffer:
 
 
 class BucketedRingBuffer:
-    def __init__(self, bucket_size: int = 10, max_buckets: int = 30) -> None:
+    def __init__(
+        self,
+        bucket_size: int = 10,
+        max_buckets: int = 30,
+        reducer: Callable[[list[float]], float] | None = None,
+    ) -> None:
         self.bucket_size = bucket_size
+        self.reducer: Callable[[list[float]], float] = reducer if reducer else self._mean
         self.current: list[float] = []
         self.buckets: deque[float] = deque(maxlen=max_buckets)
+
+    @staticmethod
+    def _mean(values: list[float]) -> float:
+        return sum(values) / len(values)
 
     def ready(self) -> bool:
         max = self.buckets.maxlen or 0
@@ -21,8 +32,8 @@ class BucketedRingBuffer:
     def feed(self, value: float) -> float | None:
         self.current.append(value)
         if len(self.current) >= self.bucket_size:
-            avg = sum(self.current) / self.bucket_size
-            self.buckets.append(avg)
+            bucket_value = self.reducer(self.current)
+            self.buckets.append(bucket_value)
             self.current.clear()
-            return avg
+            return bucket_value
         return None
