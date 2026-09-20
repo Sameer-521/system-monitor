@@ -1,14 +1,35 @@
 import time
 
-from app.models.alert import Alert, AlertState
+from app.models.alert import Alert, AlertCategory, AlertState, AlertTier
 from app.alerts.base import AlertEvaluator
+
+
+def _validate_classification(evaluator: AlertEvaluator) -> None:
+    label = type(evaluator).__name__
+    missing = [
+        attr for attr in ("name", "category", "tier") if getattr(evaluator, attr, None) is None
+    ]
+    if missing:
+        raise ValueError(f"{label} is missing alert classification metadata: {', '.join(missing)}")
+    if not isinstance(evaluator.name, str) or not evaluator.name.strip():
+        raise ValueError(f"{label}.name must be a non-empty string")
+    if not isinstance(evaluator.category, AlertCategory):
+        raise ValueError(f"{label}.category must be an AlertCategory, got {evaluator.category!r}")
+    if not isinstance(evaluator.tier, AlertTier):
+        raise ValueError(f"{label}.tier must be an AlertTier, got {evaluator.tier!r}")
 
 
 class AlertRegistry:
     def __init__(self, evaluators: list[AlertEvaluator]) -> None:
-        self.evaluators = evaluators
+        self.evaluators: list[AlertEvaluator] = []
         self.alerts_store: dict[str, dict] = {}
         self.cooldown: int = 60  # seconds
+        for evaluator in evaluators:
+            self.register(evaluator)
+
+    def register(self, evaluator: AlertEvaluator) -> None:
+        _validate_classification(evaluator)
+        self.evaluators.append(evaluator)
 
     def cooldown_active(self, old: Alert) -> bool:
         return (time.monotonic() - old.fired_at) <= self.cooldown
@@ -63,5 +84,10 @@ class AlertRegistry:
     def evaluate(self, snapshot: dict) -> list[Alert]:
         alerts: list[Alert] = []
         for evaluator in self.evaluators:
-            alerts.extend(evaluator.evaluate(snapshot))
+            emitted = evaluator.evaluate(snapshot)
+            for alert in emitted:
+                alert.name = evaluator.name
+                alert.category = evaluator.category
+                alert.tier = evaluator.tier
+            alerts.extend(emitted)
         return self.manage(alerts)

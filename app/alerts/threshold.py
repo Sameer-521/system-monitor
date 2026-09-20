@@ -4,7 +4,7 @@ from enum import Enum
 from statistics import fmean
 from typing import Any
 
-from app.models.alert import Alert, AlertLevel, AlertState
+from app.models.alert import Alert, AlertCategory, AlertLevel, AlertState, AlertTier
 from app.models.buffer import BucketedRingBuffer
 
 
@@ -17,6 +17,9 @@ class ThresholdState(Enum):
 class ThresholdAlert:
     metric: str
     display_name: str
+    name: str
+    category: AlertCategory
+    tier: AlertTier
     snapshot_key: tuple[str, ...]
     extra_key: str
     reducer: Callable[[list[float]], float] = staticmethod(fmean)

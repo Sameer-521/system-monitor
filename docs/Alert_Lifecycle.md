@@ -15,6 +15,12 @@ cooldown. Evaluators can emit on every tick without spamming — the manager col
 duplicates. HighCpuUsage and HighIowait are thin configurations of the shared
 ThresholdAlert state machine (see Threshold_Alert_State_Machine.md).
 
+Every evaluator declares its classification — `name`, `category`
+(`cpu | memory | disk | network | process | system_health`), and `tier`
+(`core | optional | extension`) — as class attributes. The registry validates it at
+registration and rejects incomplete or malformed classification (fail fast at startup,
+per the Alert Scope Policy), then stamps it onto every alert the evaluator emits.
+
 ## Flow
 
 ```
@@ -60,6 +66,9 @@ ThresholdAlert state machine (see Threshold_Alert_State_Machine.md).
 | `message`  | human-readable, includes observed values and thresholds         |
 | `fired_at` | `time.monotonic()` at emission; drives cooldown                 |
 | `extra`    | free-form: observed values, thresholds, triggering window       |
+| `name`     | catalog identity (e.g. `high_cpu_usage`); stamped by the registry |
+| `category` | `cpu / memory / disk / network / process / system_health`; stamped by the registry |
+| `tier`     | `core / optional / extension`; stamped by the registry          |
 
 ## Manager Classification
 

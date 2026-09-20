@@ -1,11 +1,15 @@
 import statistics
 
-from app.models.alert import Alert, AlertLevel, AlertState
+from app.models.alert import Alert, AlertCategory, AlertLevel, AlertState, AlertTier
 from app.models.buffer import BucketedRingBuffer
 from app.models.counter import Counter
 
 
 class CpuAnomalyAlert:
+    name = "cpu_anomaly"
+    category = AlertCategory.CPU
+    tier = AlertTier.CORE
+
     BUCKET_SIZE: int = 10
     MAX_BUCKETS: int = 30
     Z_THRESHOLD: float = 3.0

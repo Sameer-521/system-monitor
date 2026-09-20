@@ -3,7 +3,7 @@ from enum import Enum
 
 import psutil
 
-from app.models.alert import Alert, AlertLevel, AlertState
+from app.models.alert import Alert, AlertCategory, AlertLevel, AlertState, AlertTier
 
 
 class LoadAvgState(Enum):
@@ -13,6 +13,10 @@ class LoadAvgState(Enum):
 
 
 class HighLoadAvg:
+    name = "high_load_average"
+    category = AlertCategory.CPU
+    tier = AlertTier.CORE
+
     num_cpus: int = psutil.cpu_count(logical=True) or 0
 
     NORMAL: float = num_cpus * 1.0

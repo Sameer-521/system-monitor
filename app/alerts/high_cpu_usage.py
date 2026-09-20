@@ -1,4 +1,5 @@
 from app.alerts.threshold import ThresholdAlert, ThresholdState
+from app.models.alert import AlertCategory, AlertTier
 
 # for tests!
 CpuUsageState = ThresholdState
@@ -7,6 +8,9 @@ CpuUsageState = ThresholdState
 class HighCpuUsage(ThresholdAlert):
     metric = "cpu_usage"
     display_name = "CPU usage"
+    name = "high_cpu_usage"
+    category = AlertCategory.CPU
+    tier = AlertTier.CORE
     snapshot_key = ("cpu", "usage_percentage")
     extra_key = "cpu_usage"
 
